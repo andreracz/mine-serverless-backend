@@ -1,8 +1,12 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions"
 import { TableClient } from "@azure/data-tables"
 import { DefaultAzureCredential } from "@azure/identity"
+import { ResourceManagementClient } from "@azure/arm-resources";
+import { ContainerInstanceManagementClient } from "@azure/arm-containerinstance";
 
 const account = "mineserverless";
+const subscriptionId = process.env["SUBSCRIPTION_ID"];
+const resourceGroupName = process.env["RESOURCE_GROUP"];
 
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
@@ -12,6 +16,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     context.log('Route', context.bindingData.serverName);
     context.log('Route', context.bindingData.command);
     const credential = new DefaultAzureCredential();
+
     const tableClient = new TableClient(
         `https://${account}.table.core.windows.net`,
         'servers',
@@ -28,14 +33,13 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         let entitiesIter = tableClient.listEntities({ queryOptions: { filter: filter }});
         let resp:any = [];
         for await (const entity of entitiesIter) {
-          resp.push({ serverName: entity.rowKey, size: entity.size });
+          resp.push(await getServerInfo(entity));
         }
         if (filter) {
+          // if filter, means we searched for one
           resp = resp[0];
-          // GET STATUS
         }
         context.res = {
-          // status: 200, /* Defaults to 200 */
           body: resp
         };
       } else if (req.method == 'POST') {
@@ -70,14 +74,15 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
           if (server) {
             context.res = {
               status: 500,
-              body: 'Server alread exists:' + JSON.stringify(server);
+              body: 'Server alread exists:' + JSON.stringify(server)
             };
           } else {
-            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size });
-            // CREATE SERVER
+            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size , whitelist: body.whitelist, ops: body.ops, motd: body.motd});
+            const retVal = await createServer(body.serverName, body.size, body.whitelist, body.ops, body.motd);
+            body.status = "Creating";
             context.res = {
-              // status: 200, /* Defaults to 200 */
-              boby: body
+              status: retVal,
+              body: body
             };
           }
         }
@@ -91,6 +96,77 @@ async function  getServerFromTable(tableClient: TableClient, serverName: string)
     return { serverName: entity.rowKey, size: entity.size }
   }
   return null;
+}
+
+async function getServerInfo(serverInfo) {
+  const credential = new DefaultAzureCredential();
+  const aciClient = new ContainerInstanceManagementClient(credential, subscriptionId);
+  try {
+    const group = await aciClient.containerGroups.get(resourceGroupName, serverInfo.rowKey);
+    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
+  } catch(error) {
+    console.log(error);
+    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
+  }
+}
+
+async function createServer(serverName:string, size:string, whitelist: string[], ops:string[], motd: string) {
+  let memory = 2;
+  let cpu = 1;
+  switch(size) {
+    case "medium":
+      memory = 4;
+      cpu = 1;
+      break;
+    case "large":
+      memory = 8;
+      cpu = 2;
+      break;
+    case "xlarge":
+      memory = 16;
+      cpu = 4;
+      break;
+    case "small":
+    default:
+      memory = 2;
+      cpu = 1;
+      break;
+  }
+  const credential = new DefaultAzureCredential();
+  const resourceClient = new ResourceManagementClient(credential, subscriptionId);
+  const createResult = await resourceClient.deployments.beginCreateOrUpdate("test-rg", "teste", { 
+    location: "", 
+    properties: { 
+      mode: "Complete", 
+      templateLink: { 
+        uri: "https://raw.githubusercontent.com/andreracz/minecraft-on-azure/master/vanilla-aci.json" 
+      },
+      parameters: ({
+        serverName: {
+          "value": "testeracznode"
+        },
+        whitelist: {
+          "value": whitelist.join(",")
+        },
+        ops: {
+          "value": ops.join(",")
+        },
+        eula: {
+          "value": true
+        },
+        motd: {
+          "value": motd
+        },
+        memory: {
+          value: memory
+        },
+        numberCpuCores: {
+          value: cpu
+        }
+      })
+    } 
+  });
+  return createResult.getInitialResponse().status;
 }
 
 export default httpTrigger;
