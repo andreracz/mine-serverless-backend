@@ -9,7 +9,7 @@
     "start": "func start",
     "test": "echo \"No tests yet...\""
   },
-  "dependencies": {
+  "dependencies": { 
     "@azure/arm-containerinstance": "^7.1.0",
     "@azure/arm-msi": "^1.2.1",
     "@azure/arm-resources": "^4.2.2",
