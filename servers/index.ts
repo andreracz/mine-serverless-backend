@@ -30,8 +30,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
   
       } else if (req.method == 'POST') {
         const body = req.body;
-        let entitiesIter = await tableClient.getEntity(partitionKey, body.serverName);
-        if (entitiesIter) {
+        let entitiesIter = await tableClient.listEntities( { queryOptions: { filter: `rowKey='${body.serverName}'` }});
+        let found = false;
+        for await (const entity of entitiesIter) {
+          found = true;
+          break;
+        }
+        
+        if (found) {
           context.res = {
             status: 500,
             body: 'Server alread exists'
