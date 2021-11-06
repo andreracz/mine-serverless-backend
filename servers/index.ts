@@ -161,7 +161,7 @@ async function createServer(serverName:string, size:string, whitelist: string[],
   const createResult = await resourceClient.deployments.beginCreateOrUpdate(resourceGroupName, serverName, { 
     location: "", 
     properties: { 
-      mode: "Complete", 
+      mode: "Incremental", 
       templateLink: { 
         uri: "https://raw.githubusercontent.com/andreracz/minecraft-on-azure/master/vanilla-aci.json" 
       },
