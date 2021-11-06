@@ -54,8 +54,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
           }
           switch(context.bindingData.command) {
             case "start":
+              context.res = {
+                status: await start(context.bindingData.serverName),
+                body: 'Wrong command'
+              };
               break;
             case "stop":
+              context.res = {
+                status: await stop(context.bindingData.serverName),
+                body: 'Wrong command'
+              };
               break;
             default:
               context.res = {
@@ -63,6 +71,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 body: 'Wrong command'
               };
           }
+          return;
         } else if (context.bindingData.serverName) {
           context.res = {
             status: 500,
@@ -77,7 +86,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
               body: 'Server alread exists:' + JSON.stringify(server)
             };
           } else {
-            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size , whitelist: body.whitelist, ops: body.ops, motd: body.motd});
+            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size , whitelist: body.whitelist.join(","), ops: body.ops.join(","), motd: body.motd});
             const retVal = await createServer(body.serverName, body.size, body.whitelist, body.ops, body.motd);
             body.status = "Creating";
             context.res = {
@@ -98,12 +107,27 @@ async function  getServerFromTable(tableClient: TableClient, serverName: string)
   return null;
 }
 
+async function stop(serverName: string) {
+  const credential = new DefaultAzureCredential();
+  const aciClient = new ContainerInstanceManagementClient(credential, subscriptionId);
+  const response = await aciClient.containerGroups.stop(resourceGroupName, serverName);
+  return response._response.status;
+}
+
+async function start(serverName: string) {
+  const credential = new DefaultAzureCredential();
+  const aciClient = new ContainerInstanceManagementClient(credential, subscriptionId);
+  const response = await aciClient.containerGroups.start(resourceGroupName, serverName);
+  return response._response.status;
+}
+
+
 async function getServerInfo(serverInfo) {
   const credential = new DefaultAzureCredential();
   const aciClient = new ContainerInstanceManagementClient(credential, subscriptionId);
   try {
     const group = await aciClient.containerGroups.get(resourceGroupName, serverInfo.rowKey);
-    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist.join(","), ops: serverInfo.ops.join(","), motd: serverInfo.motd};
+    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
   } catch(error) {
     console.log(error);
     return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
