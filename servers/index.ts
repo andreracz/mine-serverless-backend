@@ -127,7 +127,10 @@ async function getServerInfo(serverInfo) {
   const aciClient = new ContainerInstanceManagementClient(credential, subscriptionId);
   try {
     const group = await aciClient.containerGroups.get(resourceGroupName, serverInfo.rowKey);
-    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
+    return { 
+      serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd,
+      dns: group.ipAddress.fqdn
+    };
   } catch(error) {
     console.log(error);
     return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
