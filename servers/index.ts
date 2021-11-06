@@ -22,7 +22,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
       if(req.method == 'GET') {
         let filter = null;
         if (context.bindingData.serverName) {
-          filter = `rowKey eq '${context.bindingData.serverName}'`;
+          filter = `RowKey eq '${context.bindingData.serverName}'`;
         }
         context.log(filter);
         let entitiesIter = tableClient.listEntities({ queryOptions: { filter: filter }});
@@ -40,7 +40,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         };
       } else if (req.method == 'POST') {
         if (context.bindingData.serverName && context.bindingData.command) {
-          const server = getServerFromTable(tableClient, context.bindingData.serverName);
+          const server = await getServerFromTable(tableClient, context.bindingData.serverName);
           if (!server) {
             context.res = {
               status: 500,
@@ -66,7 +66,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
           };
         } else {
           const body = req.body;
-          const server = getServerFromTable(tableClient, body.serverName);
+          const server = await getServerFromTable(tableClient, body.serverName);
           if (server) {
             context.res = {
               status: 500,
@@ -86,7 +86,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 };
 
 async function  getServerFromTable(tableClient: TableClient, serverName: string) {
-  let entitiesIter = await tableClient.listEntities( { queryOptions: { filter: `rowKey eq '${serverName}'` }});
+  let entitiesIter = await tableClient.listEntities( { queryOptions: { filter: `RowKey eq '${serverName}'` }});
   for await (const entity of entitiesIter) {
     return { serverName: entity.rowKey, size: entity.size }
   }
