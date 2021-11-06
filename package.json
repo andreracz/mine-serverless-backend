@@ -13,6 +13,7 @@
     "@azure/arm-containerinstance": "^7.1.0",
     "@azure/arm-msi": "^1.2.1",
     "@azure/arm-resources": "^4.2.2",
+    "@azure/data-tables": "^12.1.2",
     "@azure/identity": "^2.0.1"
   },
   "devDependencies": {
