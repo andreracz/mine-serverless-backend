@@ -8,6 +8,9 @@ const account = "mineserverless";
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     
     context.log('HTTP trigger function processed a request, ' + req.url);
+    context.log('Route', context.bindingData);
+    context.log('Route', context.bindingData.serverName);
+    context.log('Route', context.bindingData.command);
     const credential = new DefaultAzureCredential();
     const tableClient = new TableClient(
         `https://${account}.table.core.windows.net`,
