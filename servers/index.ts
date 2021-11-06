@@ -24,6 +24,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         if (context.bindingData.serverName) {
           filter = `rowKey eq '${context.bindingData.serverName}'`;
         }
+        context.log(filter);
         let entitiesIter = tableClient.listEntities({ queryOptions: { filter: filter }});
         let resp:any = [];
         for await (const entity of entitiesIter) {
@@ -69,7 +70,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
           if (server) {
             context.res = {
               status: 500,
-              body: 'Server alread exists'
+              body: 'Server alread exists:' + JSON.stringify(server);
             };
           } else {
             await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size });
