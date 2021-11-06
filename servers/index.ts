@@ -56,13 +56,13 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             case "start":
               context.res = {
                 status: await start(context.bindingData.serverName),
-                body: 'Wrong command'
+                body: 'Starting'
               };
               break;
             case "stop":
               context.res = {
                 status: await stop(context.bindingData.serverName),
-                body: 'Wrong command'
+                body: 'Stoping'
               };
               break;
             default:
