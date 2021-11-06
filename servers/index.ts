@@ -158,7 +158,7 @@ async function createServer(serverName:string, size:string, whitelist: string[],
   }
   const credential = new DefaultAzureCredential();
   const resourceClient = new ResourceManagementClient(credential, subscriptionId);
-  const createResult = await resourceClient.deployments.beginCreateOrUpdate("test-rg", "teste", { 
+  const createResult = await resourceClient.deployments.beginCreateOrUpdate(resourceGroupName, serverName, { 
     location: "", 
     properties: { 
       mode: "Complete", 
