@@ -20,42 +20,76 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const partitionKey = 'fixed';
 
       if(req.method == 'GET') {
-        let entitiesIter = tableClient.listEntities();
-        let i = 1;
-        const resp = [];
+        let filter = null;
+        if (context.bindingData.serverName) {
+          filter = `rowKey eq '${context.bindingData.serverName}'`;
+        }
+        let entitiesIter = tableClient.listEntities({ queryOptions: { filter: filter }});
+        let resp:any = [];
         for await (const entity of entitiesIter) {
           resp.push({ serverName: entity.rowKey, size: entity.size });
+        }
+        if (filter) {
+          resp = resp[0];
+          // GET STATUS
         }
         context.res = {
           // status: 200, /* Defaults to 200 */
           body: resp
         };
-  
       } else if (req.method == 'POST') {
-        const body = req.body;
-        let entitiesIter = await tableClient.listEntities( { queryOptions: { filter: `rowKey eq '${body.serverName}'` }});
-        let found = false;
-        for await (const entity of entitiesIter) {
-          found = true;
-          break;
-        }
-        
-        if (found) {
+        if (context.bindingData.serverName && context.bindingData.command) {
+          const server = getServerFromTable(tableClient, context.bindingData.serverName);
+          if (!server) {
+            context.res = {
+              status: 500,
+              body: 'Server not found for issuing command'
+            };
+            return;
+          }
+          switch(context.bindingData.command) {
+            case "start":
+              break;
+            case "stop":
+              break;
+            default:
+              context.res = {
+                status: 500,
+                body: 'Wrong command'
+              };
+          }
+        } else if (context.bindingData.serverName) {
           context.res = {
             status: 500,
-            body: 'Server alread exists'
+            body: 'Missing command'
           };
         } else {
-          await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size });
-          context.res = {
-            // status: 200, /* Defaults to 200 */
-            boby: body
-          };
+          const body = req.body;
+          const server = getServerFromTable(tableClient, body.serverName);
+          if (server) {
+            context.res = {
+              status: 500,
+              body: 'Server alread exists'
+            };
+          } else {
+            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size });
+            // CREATE SERVER
+            context.res = {
+              // status: 200, /* Defaults to 200 */
+              boby: body
+            };
+          }
         }
       }
 
-
-
 };
+
+async function  getServerFromTable(tableClient: TableClient, serverName: string) {
+  let entitiesIter = await tableClient.listEntities( { queryOptions: { filter: `rowKey eq '${serverName}'` }});
+  for await (const entity of entitiesIter) {
+    return { serverName: entity.rowKey, size: entity.size }
+  }
+  return null;
+}
 
 export default httpTrigger;
