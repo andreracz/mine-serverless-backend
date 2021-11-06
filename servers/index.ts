@@ -167,7 +167,7 @@ async function createServer(serverName:string, size:string, whitelist: string[],
       },
       parameters: ({
         serverName: {
-          "value": "testeracznode"
+          "value": serverName
         },
         whitelist: {
           "value": whitelist.join(",")
