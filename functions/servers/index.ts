@@ -3,18 +3,13 @@ import { TableClient } from "@azure/data-tables"
 import { DefaultAzureCredential } from "@azure/identity"
 import { ResourceManagementClient } from "@azure/arm-resources";
 import { ContainerInstanceManagementClient } from "@azure/arm-containerinstance";
-import { verify, VerifyOptions } from 'azure-ad-verify-token';
 
 const account = "mineserverless";
 const subscriptionId = process.env["SUBSCRIPTION_ID"];
 const resourceGroupName = process.env["RESOURCE_GROUP"];
-
-
-const options: VerifyOptions = {
-  jwksUri:process.env["JWKS_URI"],
-  issuer: process.env["ISSUER"],
-  audience: process.env["AUDIENCE"]
-};
+const issuer = process.env["ISSUER"];
+const audience = process.env["AUDIENCE"];
+import { Jwt, Secret, decode } from "jsonwebtoken";
 
 
 
@@ -43,7 +38,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     }
     token =token.substring("Bearer ".length).trim();
     try {
-      await verify(token, options)
+      const jwt:Jwt = await decode(token, { complete: true});
+      if (jwt.payload.aud != audience || jwt.payload.iss != issuer) {
+        context.res = {
+          status: 403,
+          body: `"Wrong isser or audience"`
+        };      
+        return;
+      }
     } catch(error) {
       context.res = {
         status: 403,
