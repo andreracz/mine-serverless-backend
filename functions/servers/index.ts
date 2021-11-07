@@ -3,10 +3,20 @@ import { TableClient } from "@azure/data-tables"
 import { DefaultAzureCredential } from "@azure/identity"
 import { ResourceManagementClient } from "@azure/arm-resources";
 import { ContainerInstanceManagementClient } from "@azure/arm-containerinstance";
+import { verify, VerifyOptions } from 'azure-ad-verify-token';
 
 const account = "mineserverless";
 const subscriptionId = process.env["SUBSCRIPTION_ID"];
 const resourceGroupName = process.env["RESOURCE_GROUP"];
+
+
+const options: VerifyOptions = {
+  jwksUri:process.env["JWKS_URI"],
+  issuer: process.env["ISSUER"],
+  audience: process.env["AUDIENCE"]
+};
+
+
 
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
@@ -15,7 +25,33 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     context.log('Route', context.bindingData);
     context.log('Route', context.bindingData.serverName);
     context.log('Route', context.bindingData.command);
-    context.log('Auth', req.headers); 
+    context.log('Auth', req.headers['authorization']); 
+    let token = req.headers['authorization'];
+    if(!token) {
+      context.res = {
+        status: 403,
+        body: `"Missing authentication"`
+      };      
+      return;
+    } 
+    if (!token.startsWith("Bearer ")) {
+      context.res = {
+        status: 403,
+        body: `"Wrong token type"`
+      };      
+      return;
+    }
+    token =token.substring("Bearer ".length).trim();
+    try {
+      await verify(token, options)
+    } catch(error) {
+      context.res = {
+        status: 403,
+        body: `"${error.message}"`
+      };      
+      return;
+    }
+    
     
     const credential = new DefaultAzureCredential();
 
