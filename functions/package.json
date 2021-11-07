@@ -2,6 +2,7 @@
   "name": "mine-serverless-backend",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
