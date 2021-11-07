@@ -15,6 +15,8 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     context.log('Route', context.bindingData);
     context.log('Route', context.bindingData.serverName);
     context.log('Route', context.bindingData.command);
+    context.log('Auth', req.headers["Authorization"]);
+    
     const credential = new DefaultAzureCredential();
 
     const tableClient = new TableClient(
@@ -56,19 +58,19 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             case "start":
               context.res = {
                 status: await start(context.bindingData.serverName),
-                body: 'Starting'
+                body: '"Starting"'
               };
               break;
             case "stop":
               context.res = {
                 status: await stop(context.bindingData.serverName),
-                body: 'Stoping'
+                body: '"Stoping"'
               };
               break;
             default:
               context.res = {
                 status: 500,
-                body: 'Wrong command'
+                body: '"Wrong command"'
               };
           }
           return;
