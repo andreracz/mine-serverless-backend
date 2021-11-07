@@ -126,8 +126,8 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
               body: 'Server alread exists:' + JSON.stringify(server)
             };
           } else {
-            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size , whitelist: body.whitelist.join(","), ops: body.ops.join(","), motd: body.motd});
-            const retVal = await createServer(body.serverName, body.size, body.whitelist, body.ops, body.motd);
+            await tableClient.createEntity({ partitionKey, rowKey: body.serverName, size: body.size , whitelist: body.whitelist, ops: body.ops, motd: body.motd, maxPlayers: body.maxPlayers});
+            const retVal = await createServer(body.serverName, body.size, body.whitelist, body.ops, body.motd, body.maxPlayers);
             body.status = "Creating";
             context.res = {
               status: retVal,
@@ -169,33 +169,29 @@ async function getServerInfo(serverInfo) {
     const group = await aciClient.containerGroups.get(resourceGroupName, serverInfo.rowKey);
     return { 
       serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd,
-      dns: group.ipAddress.fqdn
+      dns: group.ipAddress.fqdn, maxPlayers: serverInfo.maxPlayers
     };
   } catch(error) {
     console.log(error);
-    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd};
+    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd, maxPlayers: serverInfo.maxPlayers};
   }
 }
 
-async function createServer(serverName:string, size:string, whitelist: string[], ops:string[], motd: string) {
+async function createServer(serverName:string, size:string, whitelist: string, ops:string, motd: string, maxPlayers: number) {
   let memory = 2;
   let cpu = 1;
   switch(size) {
     case "medium":
-      memory = 4;
-      cpu = 1;
-      break;
-    case "large":
       memory = 8;
       cpu = 2;
       break;
-    case "xlarge":
+    case "large":
       memory = 16;
       cpu = 4;
       break;
     case "small":
     default:
-      memory = 2;
+      memory = 4;
       cpu = 1;
       break;
   }
@@ -213,10 +209,10 @@ async function createServer(serverName:string, size:string, whitelist: string[],
           "value": serverName
         },
         whitelist: {
-          "value": whitelist.join(",")
+          "value": whitelist
         },
         ops: {
-          "value": ops.join(",")
+          "value": ops
         },
         eula: {
           "value": true
@@ -229,6 +225,9 @@ async function createServer(serverName:string, size:string, whitelist: string[],
         },
         numberCpuCores: {
           value: cpu
+        },
+        maxPlayers: {
+          value: maxPlayers
         }
       })
     } 
