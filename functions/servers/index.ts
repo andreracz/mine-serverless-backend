@@ -15,7 +15,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     context.log('Route', context.bindingData);
     context.log('Route', context.bindingData.serverName);
     context.log('Route', context.bindingData.command);
-    context.log('Auth', req.headers["Authorization"]);
+    context.log('Auth', req.headers); 
     
     const credential = new DefaultAzureCredential();
 
