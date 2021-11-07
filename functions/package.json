@@ -16,7 +16,7 @@
     "@azure/arm-resources": "^4.2.2",
     "@azure/data-tables": "^12.1.2",
     "@azure/identity": "^2.0.1",
-    "azure-ad-verify-token": "^2.0.0"
+    "azure-ad-verify-token": "^1.1.2"
   },
   "devDependencies": {
     "@azure/functions": "^1.2.3",
