@@ -1,1 +1,5 @@
-<h1>Hello World</h1>
+<h1>Minecraft Servers</h1>
+<button mat-raised-button *ngIf="!loginDisplay" (click)="login()"><fa-icon icon="sign-in-alt"></fa-icon>&nbsp;Login</button>
+<button mat-raised-button *ngIf="loginDisplay" (click)="logout()"><fa-icon icon="sign-out-alt"></fa-icon>&nbsp;Logout</button>
+<server-list *ngIf="loginDisplay"></server-list>
+<app-redirect></app-redirect>

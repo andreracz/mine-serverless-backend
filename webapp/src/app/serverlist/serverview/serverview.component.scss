@@ -1,0 +1,26 @@
+
+li {
+    list-style-type: none;
+    margin-bottom: 10px;
+    float: left;
+    width: 48%;//helps to determine number of columns, for instance 33.3% displays 3 columns
+    margin: 5px;
+}
+
+.serverBox {
+    border: 1px solid gray;
+    padding: 3px;
+}
+  
+label {
+    font-weight: bold;
+    width: 120px;
+    height: 24px;
+    display: inline-block;
+}
+
+button {
+	border-radius: 5px;
+	padding: 4px;
+	margin: 4px;
+}

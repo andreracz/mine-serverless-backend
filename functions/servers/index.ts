@@ -168,12 +168,15 @@ async function getServerInfo(serverInfo) {
   try {
     const group = await aciClient.containerGroups.get(resourceGroupName, serverInfo.rowKey);
     return { 
-      serverName: serverInfo.rowKey, size: serverInfo.size, status: group.instanceView.state,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd,
-      dns: group.ipAddress.fqdn, maxPlayers: serverInfo.maxPlayers
+      serverName: serverInfo.rowKey, size: serverInfo.size, maxPlayers: serverInfo.maxPlayers,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd,
+      status: group.instanceView.state,
+      dns: group.ipAddress.fqdn
     };
   } catch(error) {
-    console.log(error);
-    return { serverName: serverInfo.rowKey, size: serverInfo.size, status: "NotFound",  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd, maxPlayers: serverInfo.maxPlayers};
+    return { 
+      serverName: serverInfo.rowKey, size: serverInfo.size, maxPlayers: serverInfo.maxPlayers,  whitelist: serverInfo.whitelist, ops: serverInfo.ops, motd: serverInfo.motd,
+      status: "Not found"
+    };
   }
 }
 

@@ -1,0 +1,29 @@
+<h2>Servers</h2>
+<button (click)="reload()"><fa-icon icon="sync-alt"></fa-icon>&nbsp;Recarregar</button>
+<button (click)="addServer()"><fa-icon icon="plus"></fa-icon>&nbsp;Criar novo server</button>
+<div *ngIf="currentServer != null">
+    <label>Nome:</label>
+    <input type="text"  [(ngModel)]="currentServer.serverName"/> <br />
+    <label>Tamanho:</label> 
+    <select [(ngModel)]="currentServer.size">
+        <option value="small">Pequeno (4GB)</option>
+        <option value="medium">Médio (8GB)</option>
+        <option value="large">Grande (16GB)</option>
+    </select><br />
+    <label>Mensagem:</label>
+    <input type="text"  [(ngModel)]="currentServer.motd"/><br />
+    <label>Whitelist:</label><input [(ngModel)]="currentServer.whitelist"/><br />
+    <label>Operadores:</label><input [(ngModel)]="currentServer.ops"/><br />
+    <label>Max. de Jogadores:</label>
+    <input type="number"  [(ngModel)]="currentServer.maxPlayers"/>
+    <button (click)="saveServer()"><fa-icon icon="plus"></fa-icon>&nbsp;Salvar</button>
+</div>
+
+<ul>
+    <server-view *ngFor="let server of this.servers" [server]="server" (startClicked)="startServer(server)" (stopClicked)="stopServer(server)"></server-view>
+</ul>
+<div style="position: relative;">
+    <ngx-spinner  bdColor="rgba(0, 0, 0, 0.8)" size="medium" color="#fff" type="square-spin" [fullScreen]="true"><p style="color: white" > Carregando </p></ngx-spinner>
+</div>
+
+

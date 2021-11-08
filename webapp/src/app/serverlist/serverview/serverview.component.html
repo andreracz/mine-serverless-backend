@@ -1,0 +1,15 @@
+<li>
+    <div class="serverBox">
+        <label>Nome:</label><span>{{server.serverName}}</span><br/>
+        <label>Tamanho:</label>
+            <span *ngIf="server.size=='small'">Pequeno (4GB)</span>
+            <span *ngIf="server.size=='medium'">Médio (8GB)</span>
+            <span *ngIf="server.size=='large'">Grande (16GB)</span>
+            <br/>
+        <label>Endereço:</label> <span>{{server.dns}}</span><br/>
+        <label>Status:</label> <span>{{server.status}}</span><br/>
+        <button (click)="startEvent()" *ngIf="server.status == 'Stopped'"><fa-icon icon="play"></fa-icon>&nbsp;Start</button>
+        <button (click)="stopEvent()" *ngIf="server.status == 'Running'"><fa-icon icon="stop"></fa-icon>&nbsp;Stop</button>
+    </div>
+    
+</li> 
